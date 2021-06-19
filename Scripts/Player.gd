@@ -15,6 +15,7 @@ const TILE_SIZE: int = 16
 #------------------
 onready var animation_tree: AnimationTree = $AnimationTree
 onready var animation_state: AnimationNodeStateMachinePlayback = animation_tree.get("parameters/playback")
+onready var raycast: RayCast2D = $RayCast2D
 
 #------------------
 # Enums
@@ -75,14 +76,22 @@ func _process_player_input() -> void:
 		animation_state.travel("Idle")
 		
 func _move_player(delta: float) -> void:
-	percent_moved_to_next_tile += walk_speed * delta
+	var desired_step: Vector2 = input_direction * TILE_SIZE / 2
 	
-	if percent_moved_to_next_tile >= 1.0:
-		position = initial_position + (TILE_SIZE * input_direction)
-		percent_moved_to_next_tile = 0.0
-		is_moving = false
+	raycast.cast_to = desired_step
+	raycast.force_raycast_update()
+	
+	if !raycast.is_colliding():
+		percent_moved_to_next_tile += walk_speed * delta
+		
+		if percent_moved_to_next_tile >= 1.0:
+			position = initial_position + (TILE_SIZE * input_direction)
+			percent_moved_to_next_tile = 0.0
+			is_moving = false
+		else:
+			position = initial_position + (TILE_SIZE * input_direction * percent_moved_to_next_tile)
 	else:
-		position = initial_position + (TILE_SIZE * input_direction * percent_moved_to_next_tile)	
+		is_moving = false
 
 func _need_to_turn() -> bool:
 	var new_facing_direction
