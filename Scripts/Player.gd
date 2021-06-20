@@ -10,18 +10,22 @@ signal player_stopped_signal
 # Exports
 #------------------
 export var walk_speed: float = 4.0
+export var jump_speed: float = 4.0
 
 #------------------
 # Constants
 #------------------
 const TILE_SIZE: int = 16
+const LandingDustEffect = preload("res://Scenes/LandingDustEffect.tscn")
 
 #------------------
 # On ready variables
 #------------------
 onready var animation_tree: AnimationTree = $AnimationTree
 onready var animation_state: AnimationNodeStateMachinePlayback = animation_tree.get("parameters/playback")
-onready var raycast: RayCast2D = $RayCast2D
+onready var blocking_raycast: RayCast2D = $BlockingRayCast2D
+onready var ledge_raycast: RayCast2D = $LedgeRayCast2D
+onready var shadow: Sprite = $Shadow
 
 #------------------
 # Enums
@@ -39,6 +43,7 @@ var is_moving: bool = false
 var percent_moved_to_next_tile: float = 0.0
 var player_state = PlayerState.IDLE
 var facing_direction = FacingDirection.DOWN
+var jumping_over_ledge: bool = false
 
 #------------------
 # Private functions
@@ -47,6 +52,7 @@ var facing_direction = FacingDirection.DOWN
 func _ready() -> void:
 	initial_position = position
 	animation_tree.active = true
+	shadow.visible = false
 
 func _physics_process(delta: float) -> void:
 	
@@ -84,10 +90,32 @@ func _process_player_input() -> void:
 func _move_player(delta: float) -> void:
 	var desired_step: Vector2 = input_direction * TILE_SIZE / 2
 	
-	raycast.cast_to = desired_step
-	raycast.force_raycast_update()
+	blocking_raycast.cast_to = desired_step
+	blocking_raycast.force_raycast_update()
 	
-	if !raycast.is_colliding():
+	ledge_raycast.cast_to = desired_step
+	ledge_raycast.force_raycast_update()
+	
+	if (ledge_raycast.is_colliding() && input_direction == Vector2.DOWN) || jumping_over_ledge:
+		percent_moved_to_next_tile += jump_speed * delta
+		
+		if percent_moved_to_next_tile >= 2.0:
+			position = initial_position + (input_direction * TILE_SIZE * 2)
+			percent_moved_to_next_tile = 0.0
+			is_moving = false
+			jumping_over_ledge = false
+			shadow.visible = false
+			
+			var landing_dust_effect = LandingDustEffect.instance()
+			landing_dust_effect.position = position
+			get_tree().current_scene.add_child(landing_dust_effect)
+		else:
+			shadow.visible = true
+			jumping_over_ledge = true
+			var input = input_direction.y * TILE_SIZE * percent_moved_to_next_tile
+			position.y = initial_position.y + (-0.96 - 0.53 * input + 0.05 * pow(input, 2))
+			
+	elif !blocking_raycast.is_colliding():
 		if percent_moved_to_next_tile == 0:
 			emit_signal("player_moving_signal")
 			
