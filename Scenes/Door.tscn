@@ -6,7 +6,7 @@
 [sub_resource type="RectangleShape2D" id=1]
 extents = Vector2( 8, 8 )
 
-[sub_resource type="Animation" id=3]
+[sub_resource type="Animation" id=2]
 resource_name = "CloseDoor"
 length = 0.3
 tracks/0/type = "value"
@@ -48,8 +48,7 @@ tracks/2/keys = {
 } ]
 }
 
-[sub_resource type="Animation" id=2]
-resource_name = "OpenDoor"
+[sub_resource type="Animation" id=3]
 length = 0.3
 tracks/0/type = "value"
 tracks/0/path = NodePath("Sprite:frame")
@@ -92,5 +91,8 @@ position = Vector2( 8, 8 )
 shape = SubResource( 1 )
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
-anims/CloseDoor = SubResource( 3 )
-anims/OpenDoor = SubResource( 2 )
+anims/CloseDoor = SubResource( 2 )
+anims/OpenDoor = SubResource( 3 )
+
+[connection signal="body_entered" from="." to="." method="_on_Door_body_entered"]
+[connection signal="body_exited" from="." to="." method="_on_Door_body_exited"]

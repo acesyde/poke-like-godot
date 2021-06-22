@@ -44,7 +44,7 @@ enum FacingDirection { LEFT, RIGHT, UP, DOWN }
 # Local variables
 #------------------
 var initial_position: Vector2 = Vector2.ZERO
-var input_direction: Vector2 = Vector2.ZERO
+var input_direction: Vector2 = Vector2.DOWN
 var is_moving: bool = false
 var stop_input: bool = false
 var percent_moved_to_next_tile: float = 0.0
@@ -61,6 +61,9 @@ func _ready() -> void:
 	initial_position = position
 	animation_tree.active = true
 	shadow.visible = false
+	animation_tree.set("parameters/Idle/blend_position", input_direction)
+	animation_tree.set("parameters/Walk/blend_position", input_direction)
+	animation_tree.set("parameters/Turn/blend_position", input_direction)
 
 func _physics_process(delta: float) -> void:
 	
@@ -181,3 +184,9 @@ func _finished_turning():
 	
 func _entered_door():
 	emit_signal("player_entered_door_signal")
+
+func set_spawn(location: Vector2, direction: Vector2) -> void:
+	animation_tree.set("parameters/Idle/blend_position", direction)
+	animation_tree.set("parameters/Walk/blend_position", direction)
+	animation_tree.set("parameters/Turn/blend_position", direction)
+	position = location
